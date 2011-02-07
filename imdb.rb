@@ -10,7 +10,7 @@ set :haml, :format => :html5
 before '/*' do
   @neo = Neography::Rest.new({
     :server => ENV['NEO4J_HOST'],
-    :directory => "/#{ENV['NEO4J_INSTANCE']}",
+#    :directory => "/#{ENV['NEO4J_INSTANCE']}",
     :authentication => 'basic',
     :username => ENV['NEO4J_LOGIN'] , 
     :password => ENV['NEO4J_PASSWORD']
