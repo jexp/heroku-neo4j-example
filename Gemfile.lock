@@ -1,0 +1,22 @@
+GEM
+  remote: http://rubygems.org/
+  specs:
+    crack (0.1.8)
+    httparty (0.7.3)
+      crack (= 0.1.8)
+    json (1.4.6)
+    neography (0.0.9)
+      httparty (~> 0.7.3)
+      json
+    rack (1.2.1)
+    sinatra (1.1.2)
+      rack (~> 1.1)
+      tilt (~> 1.2)
+    tilt (1.2.1)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  neography (= 0.0.9)
+  sinatra (= 1.1.2)
