@@ -4,4 +4,4 @@ require 'bundler'
 Bundler.require
 
 require 'imdb'
-run Sinatra::Application
+run Imdb
