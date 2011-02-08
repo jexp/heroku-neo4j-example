@@ -3,10 +3,11 @@
 
 require 'rubygems'
 require "neography"
-require "sinatra"
+require 'sinatra/base'
 
+class Imdb < Sinatra::Base
 set :haml, :format => :html5 
-
+set :app_file, __FILE__
 before '/*' do
   @neo = Neography::Rest.new({
     :server => ENV['NEO4J_HOST'],
@@ -31,4 +32,7 @@ end
 
 get '/movies' do
   '<h2>Actors</h2>'
+end
+
+  run! if app_file == $0
 end
