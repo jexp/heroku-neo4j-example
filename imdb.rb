@@ -22,7 +22,7 @@ end
 
 
 get '/' do
-   '<h2>Neo4j Imdb</h2><pre>' + @neo.get_root.inspect.to_s + '\n' + ENV.to_hash.inspect() + '\n' +  request.env.inspect.to_s + "</pre>"
+   '<h2>Neo4j Imdb</h2><pre>' + @neo.get_root.inspect.to_s + "\n" + ENV.to_hash.inspect() + "\n" +  request.env.inspect.to_s + "</pre>".gsub(",","\n")
 end
 
 get '/actors' do
