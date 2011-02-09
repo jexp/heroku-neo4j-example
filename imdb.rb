@@ -22,7 +22,9 @@ end
 
 
 get '/' do
-   '<h2>Neo4j Imdb</h2>' + @neo.get_root.inspect
+  env = ENV.to_hash.inspect
+  header = 
+   '<h2>Neo4j Imdb</h2><pre>' + @neo.get_root.inspect +"\n" ENV.to_hash.inspect +"\n"+request.env.inspect+"</pre>"
 end
 
 get '/actors' do

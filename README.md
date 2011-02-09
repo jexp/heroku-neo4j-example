@@ -6,5 +6,5 @@ It renders the actors and movies from a small dataset of the Internet Movie Data
 
 Links
 -----
-[Neo4j Community] (http://neo4j.org)
-[Neo4j Heroku Addon](http://wiki.neo4j.org/index.php?title=Neo4j_Heroku_Addon)
+* [Neo4j Community] (http://neo4j.org)
+* [Neo4j Heroku Addon](http://wiki.neo4j.org/index.php?title=Neo4j_Heroku_Addon)
