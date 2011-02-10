@@ -1,0 +1,12 @@
+%h2= @actor["data"]["name"]
+
+%h2 Filmography:
+%table
+  %tr
+    %th Movie
+    %th Role
+
+  - @roles.each do |role|
+    %tr
+      %td= link_to role["movie_link"], role["movie_title"]
+      %td= role["data"]["role"]

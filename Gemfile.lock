@@ -2,13 +2,26 @@ GEM
   remote: http://rubygems.org/
   specs:
     crack (0.1.8)
+    diff-lcs (1.1.2)
+    haml (3.0.25)
     httparty (0.7.3)
       crack (= 0.1.8)
     json (1.4.6)
     neography (0.0.9)
       httparty (~> 0.7.3)
       json
+    net-http-spy (0.2.1)
     rack (1.2.1)
+    rack-test (0.5.7)
+      rack (>= 1.0)
+    rspec (2.2.0)
+      rspec-core (~> 2.2)
+      rspec-expectations (~> 2.2)
+      rspec-mocks (~> 2.2)
+    rspec-core (2.2.1)
+    rspec-expectations (2.2.0)
+      diff-lcs (~> 1.1.2)
+    rspec-mocks (2.2.0)
     sinatra (1.1.2)
       rack (~> 1.1)
       tilt (~> 1.2)
@@ -18,5 +31,9 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  haml (= 3.0.25)
   neography (= 0.0.9)
+  net-http-spy
+  rack-test
+  rspec
   sinatra (= 1.1.2)

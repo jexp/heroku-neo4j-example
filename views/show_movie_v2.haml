@@ -1,0 +1,17 @@
+%p
+  %b Title:
+  = @movie.title
+%p
+  %b Year:
+  = @movie.year
+
+%h2 Cast:
+%table
+  %tr
+    %th Actor
+    %th Role
+
+  - @actors.each do |actor|
+    %tr
+      %td= actor.name
+      %td= actor.role
