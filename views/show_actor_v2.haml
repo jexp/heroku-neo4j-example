@@ -8,7 +8,7 @@
     %th Movie
     %th Role
 
-  - @movies.each do |movie|
+  - @roles.each do |role|
     %tr
-      %td= movie.title
-      %td= movie.role
+      %td= link_to "/movie_v2/" + role.end_node.neo_id, role.end_node.title
+      %td= role.role

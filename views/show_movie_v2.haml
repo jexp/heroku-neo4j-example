@@ -11,7 +11,7 @@
     %th Actor
     %th Role
 
-  - @actors.each do |actor|
+  - @roles.each do |role|
     %tr
-      %td= actor.name
-      %td= actor.role
+      %td= link_to "/actor_v2/" + role.start_node.neo_id, role.start_node.name
+      %td= role.role
