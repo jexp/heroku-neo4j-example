@@ -1,0 +1,56 @@
+%form{ :action => "/search", :method => "post"}
+  %input{:type => "text", :name => "search", :value => @search}
+  %input{:type => "submit", :value => "Search", :class => "button"}
+
+%h2 Search Results
+
+- unless @exact_movies.nil? and @exact_actors.nil?
+  %h3 
+    Exact Match
+    - unless @exact_actors.nil?
+      %h4 
+        Actors
+        %table
+          %tr
+            %th Actor
+
+          - @exact_actors.each do |actor|
+            %tr
+              %td= link_to "/actor/" + actor["self"].split('/').last, actor["data"]["name"]
+
+    - unless @exact_movies.nil?
+      %h4 
+        Movies
+        %table
+          %tr
+            %th Movie
+
+          - @exact_movies.each do |movie|
+            %tr
+              %td= link_to "/movie/" + movie["self"].split('/').last, movie["data"]["title"]
+
+
+- unless @search_movies.nil? and @search_actors.nil?
+  %h3 
+    Exact Match
+    - unless @search_actors.nil?
+      %h4 
+        Actors
+        %table
+          %tr
+            %th Actor
+
+          - @search_actors.each do |actor|
+            %tr
+              %td= link_to "/actor/" + actor["self"].split('/').last, actor["data"]["name"]
+
+    - unless @search_movies.nil?
+      %h4 
+        Movies
+        %table
+          %tr
+            %th Movie
+
+          - @search_movies.each do |movie|
+            %tr
+              %td= link_to "/movie/" + movie["self"].split('/').last, movie["data"]["title"]

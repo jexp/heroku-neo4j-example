@@ -1,0 +1,17 @@
+%p
+  %b Title:
+  = @movie.title
+%p
+  %b Year:
+  = @movie.year
+
+%h2 Cast:
+%table
+  %tr
+    %th Actor
+    %th Role
+
+  - @roles.each do |role|
+    %tr
+      %td= link_to "/actor_v2/" + role.start_node.neo_id, role.start_node.name
+      %td= role.role

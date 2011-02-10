@@ -1,0 +1,32 @@
+%h2= @actor["data"]["name"]
+
+Kevin Bacon number: 
+
+%b= @bacon_path["length"]
+
+%h2 Bacon Path:
+
+%table
+  %tr
+    %th Type
+    %th Name
+
+  - @bacon_nodes.each_with_index do |node, index|
+    %tr
+      - if index.even?
+        %td Actor
+        %td= link_to "/actor/" + node["self"].split('/').last, node["data"]["name"]
+      - else
+        %td Movie
+        %td= link_to "/movie/" + node["self"].split('/').last, node["data"]["title"]
+
+%h2 Filmography:
+%table
+  %tr
+    %th Movie
+    %th Role
+
+  - @roles.each do |role|
+    %tr
+      %td= link_to role["movie_link"], role["movie_title"]
+      %td= role["data"]["role"]
