@@ -4,7 +4,7 @@
 require 'rubygems'
 require 'neography'
 require 'sinatra/base'
-
+require 'uri'
 
 class Imdb < Sinatra::Base
 set :haml, :format => :html5 
@@ -48,7 +48,19 @@ helpers do
 end
 
 get '/' do
-   '<h2>Neo4j Imdb</h2>' + @neo.get_root.inspect + '<br\>' + '<h3>Indexes</h3>' + @neo.list_node_indexes.inspect 
+   '<h2>Neo4j Imdb</h2>' + 
+   '<form method="post" action="/search"><input name="search"><button type="submit">Search</button></form>'
+end
+
+post '/search' do
+  @search = params["search"]
+  @escaped_search = URI.escape(@search)
+  @exact_movies = @neo.get_node_index("exact", "title", @escaped_search)
+  @exact_actors = @neo.get_node_index("exact", "name", @escaped_search)
+  @search_movies = @neo.get_node_index("search", "title", @escaped_search)
+  @search_actors = @neo.get_node_index("search", "name", @escaped_search)
+
+  haml :search_results
 end
 
 get '/movie/:id' do
@@ -59,6 +71,11 @@ get '/movie/:id' do
     role["actor_name"] = node["data"]["name"]
     role["actor_link"] = "/actor/" + node["self"].split('/').last
   end
+
+  bacon = @neo.get_node_index("exact", "name", URI.escape("Bacon, Kevin")).first
+
+  @bacon_path = @neo.get_path(@movie, 2122, {"type"=> "ACTS_IN"}, depth=6, algorithm="shortestPath")
+  @bacon_nodes = @bacon_path["nodes"].collect{ |n| @neo.get_node(n)}
 
   haml :show_movie
 end
@@ -71,6 +88,11 @@ get '/actor/:id' do
     role["movie_title"] = node["data"]["title"]
     role["movie_link"] = "/movie/" + node["self"].split('/').last
   end
+
+  bacon = @neo.get_node_index("exact", "name", URI.escape("Bacon, Kevin")).first["self"].split('/').last
+
+  @bacon_path = @neo.get_path(@actor, 2122, {"type"=> "ACTS_IN"}, depth=6, algorithm="shortestPath")
+  @bacon_nodes = @bacon_path["nodes"].collect{ |n| @neo.get_node(n)}
 
   haml :show_actor
 end
