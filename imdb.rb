@@ -83,9 +83,11 @@ def expand_word_node(word_nodes, type, name_param)
   }.flatten.sort{ | node1, node2 | node1["data"][name_param] <=> node2["data"][name_param]}
 end
 
-def trace(name)
+def trace(name, data = nil)
+    size = ""
+    size = " "+(data.to_s.length/1024).to_s+" kB" if data
     time = Time.now.to_f
-    @times << [name , ((time - @time)*1000).to_i]
+    @times << [name.to_s + size , ((time - @time)*1000).to_i]
     @time = time
 end
 
@@ -122,17 +124,18 @@ end
 get '/movie/:id' do
   @movie = @neo.get_node(params[:id])
   trace(:movie)
-  @roles = @neo.traverse(@movie, "fullpath", neighbours("ACTS_IN","in"));
+  @roles = @neo.traverse(@movie, "fullpath", neighbours("ACTS_IN","in"))
+  trace(:fetch_roles,@roles)
   @roles = @roles.collect{ | path |
       { "actor_name" => path["end"]["data"]["name"],
         "actor_link" => "/actor/" + node_id(path["end"]),
         "data" => path["relationships"].last["data"] }
       }.flatten.sort{ | node1, node2 | (node1["data"]["role"]||"") <=> (node2["data"]["role"]||"")}
-  trace("parse_roles "+(@roles.to_s.length/1024).to_s)
+  trace(:parse_roles,@roles)
   @bacon_path = @neo.get_path(@movie, 2122, {"type"=> "ACTS_IN"}, depth=6, algorithm="shortestPath")
-  trace(:bacon_path)
+  trace(:bacon_path,@bacon_path)
   @bacon_nodes = @bacon_path["nodes"].collect{ |n| @neo.get_node(n)}
-  trace(:bacon_nodes)
+  trace(:bacon_nodes,@bacon_nodes)
   haml :show_movie
 end
 
@@ -141,13 +144,13 @@ get '/movie2/:id' do
   trace(:movie)
 
   @roles = @neo.get_node_relationships(@movie, "in", "ACTS_IN")
-  trace("fetch_movie_relationships "+(@roles.to_s.length/1024).to_s)
+  trace(:fetch_movie_relationships,@roles)
   @roles.each do |role|
     node = @neo.get_node(role["start"])
     role["actor_name"] = node["data"]["name"]
     role["actor_link"] = "/actor/" + node["self"].split('/').last
   end
-  trace("fetch_movie_actors "+(@roles.to_s.length/1024).to_s)
+  trace(:fetch_movie_actors,@roles)
 
   @bacon_path = @neo.get_path(@movie, 2122, {"type"=> "ACTS_IN"}, depth=6, algorithm="shortestPath")
   trace(:bacon_path)
@@ -161,20 +164,20 @@ get '/actor/:id' do
   trace(:actor)
 
   @roles = @neo.traverse(@actor, "fullpath", neighbours("ACTS_IN","out"))
-  trace("fetch_roles "+(@roles.to_s.length/1024).to_s)
+  trace(:fetch_roles,@roles)
 
   @roles = @roles.collect{ | path |
       { "movie_title" => path["end"]["data"]["title"],
         "movie_link" => "/movie/" + node_id(path["end"]),
         "data" => path["relationships"].last["data"] }
       }.flatten.sort{ | node1, node2 | (node1["data"]["role"]||"") <=> (node2["data"]["role"]||"")}
-  trace("parse_roles "+(@roles.to_s.length/1024).to_s)
+  trace(:parse_roles,@roles)
 
 
   @bacon_path = @neo.get_path(@actor, 2122, {"type"=> "ACTS_IN"}, depth=6, algorithm="shortestPath")
-  trace(:bacon_path)
+  trace(:bacon_path,@bacon_path)
   @bacon_nodes = @bacon_path["nodes"].collect{ |n| @neo.get_node(n)}
-  trace(:bacon_nodes)
+  trace(:bacon_nodes,@bacon_nodes)
 
   haml :show_actor
 end
