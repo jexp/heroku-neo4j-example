@@ -1,27 +1,33 @@
-%form{ :action => "/search", :method => "post"}
-  %input{:type => "text", :name => "search", :value => @search}
-  %input{:type => "submit", :value => "Search", :class => "button"}
+%title IMDB powered by Neo4j
+%h1
+  IMDB powered by Neo4j
+  %h2
+    Search Movies or Actors by Keyword
 
-%h2 Search Results
+  %form{ :action => "/search", :method => "post"}
+    %input{:type => "text", :name => "search", :value => @search}
+    %input{:type => "submit", :value => "Search", :class => "button"}
 
-- unless @search_actors.nil?
-  %h4
-    Actors
-    %table
-      %tr
-        %th Actor
+  %h2 Search Results
 
-      - @search_actors.each do |actor|
+  - unless @search_actors.nil?
+    %h4
+      Actors
+      %table
         %tr
-          %td= link_to "/actor/" + actor["self"].split('/').last, actor["data"]["name"]
+          %th Actor
 
-- unless @search_movies.nil?
-  %h4
-    Movies
-    %table
-      %tr
-        %th Movie
+        - @search_actors.each do |actor|
+          %tr
+            %td= link_to "/actor/" + actor["self"].split('/').last, actor["data"]["name"]
 
-      - @search_movies.each do |movie|
+  - unless @search_movies.nil?
+    %h4
+      Movies
+      %table
         %tr
-          %td= link_to "/movie/" + movie["self"].split('/').last, movie["data"]["title"]
+          %th Movie
+
+        - @search_movies.each do |movie|
+          %tr
+            %td= link_to "/movie/" + movie["self"].split('/').last, movie["data"]["title"]

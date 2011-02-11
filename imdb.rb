@@ -6,6 +6,26 @@ require 'neography'
 require 'sinatra/base'
 require 'uri'
 
+
+module Neography
+  class Rest
+    def get_type(type)
+        case type
+          when :node, "nodes", :nodes, "nodes"
+            "node"
+          when :relationship, "relationship", :relationships, "relationships"
+            "relationship"
+          when :path, "path", :paths, "paths"
+            "path"
+          when :fullpath, "fullpath", :fullpaths, "fullpaths"
+            "fullpath"
+          else
+            "node"
+        end
+      end
+  end
+end
+
 class Imdb < Sinatra::Base
 set :haml, :format => :html5 
 set :app_file, __FILE__
@@ -36,6 +56,7 @@ before do
     :username => ENV['NEO4J_LOGIN'] , 
     :password => ENV['NEO4J_PASSWORD']
     })
+  @bacon = @neo.get_node_index("exact", "name", URI.escape("Bacon, Kevin")).first
 end
 
 
@@ -48,20 +69,15 @@ helpers do
 end
 
 get '/' do
-   '<h2>Neo4j Imdb</h2>' + 
-   '<form method="post" action="/search"><input name="search"><button type="submit">Search</button></form>'
+  haml :search_results
 end
 
 def expand_word_node(word_nodes, type, name_param)
   return nil if !word_nodes
   word_nodes.collect { |word_node|
-    @neo.traverse(word_node,
-                        "nodes",
-                        {"order" => "breadth first",
-                         "uniqueness" => "node global",
-                         "relationships" => [{"type"=> type, "direction" => "out"}],
-                         "return filter" => {"language" => "builtin", "name" => "all but start node"},
-                         "depth"         => 1}).collect{ | node | { "self" => node["self"], "data" => node["data"] } }
+    @neo.traverse(word_node, :node, neighbours(type, "out")).collect{ | node |
+      { "self" => node["self"], "data" => node["data"] }
+    }
   }.flatten.sort{ | node1, node2 | node1["data"][name_param] <=> node2["data"][name_param]}
 end
 
@@ -81,33 +97,38 @@ post '/search' do
   haml :search_results
 end
 
-get '/movie/:id' do
-  @movie = @neo.get_node(params[:id])  
-  @roles = @neo.get_node_relationships(@movie, "in", "ACTS_IN")
-  @roles.each do |role| 
-    node = @neo.get_node(role["start"])
-    role["actor_name"] = node["data"]["name"]
-    role["actor_link"] = "/actor/" + node["self"].split('/').last
-  end
+def neighbours(type, direction)
+  {"order" => "depth first",
+                 "uniqueness" => "node global",
+                 "relationships" => [{"type"=> type, "direction" => direction}],
+                 "return filter" => {"language" => "builtin", "name" => "all but start node"},
+                 "depth"         => 1}
+end
 
-  bacon = @neo.get_node_index("exact", "name", URI.escape("Bacon, Kevin")).first
+get '/movie/:id' do
+  @movie = @neo.get_node(params[:id])
+
+  @roles = @neo.traverse(@movie, "fullpath", neighbours("ACTS_IN","in")).collect{ | path |
+      { "actor_name" => path["end"]["data"]["name"],
+        "actor_link" => "/actor/" + path["end"]["self"].split("/").last,
+        "data" => path["relationships"].last["data"] }
+      }.flatten.sort{ | node1, node2 | (node1["data"]["role"]||"") <=> (node2["data"]["role"]||"")}
 
   @bacon_path = @neo.get_path(@movie, 2122, {"type"=> "ACTS_IN"}, depth=6, algorithm="shortestPath")
   @bacon_nodes = @bacon_path["nodes"].collect{ |n| @neo.get_node(n)}
-
+  
   haml :show_movie
 end
 
 get '/actor/:id' do
-  @actor = @neo.get_node(params[:id])  
-  @roles = @neo.get_node_relationships(@actor, "out", "ACTS_IN")
-  @roles.each do |role| 
-    node = @neo.get_node(role["end"])
-    role["movie_title"] = node["data"]["title"]
-    role["movie_link"] = "/movie/" + node["self"].split('/').last
-  end
+  @actor = @neo.get_node(params[:id])
 
-  bacon = @neo.get_node_index("exact", "name", URI.escape("Bacon, Kevin")).first["self"].split('/').last
+  @roles = @neo.traverse(@actor, "fullpath", neighbours("ACTS_IN","out")).collect{ | path |
+      { "movie_title" => path["end"]["data"]["title"],
+        "movie_link" => "/movie/" + path["end"]["self"].split("/").last,
+        "data" => path["relationships"].last["data"] }
+      }.flatten.sort{ | node1, node2 | (node1["data"]["role"]||"") <=> (node2["data"]["role"]||"")}
+
 
   @bacon_path = @neo.get_path(@actor, 2122, {"type"=> "ACTS_IN"}, depth=6, algorithm="shortestPath")
   @bacon_nodes = @bacon_path["nodes"].collect{ |n| @neo.get_node(n)}
