@@ -52,14 +52,32 @@ get '/' do
    '<form method="post" action="/search"><input name="search"><button type="submit">Search</button></form>'
 end
 
-post '/search' do
-  @search = params["search"]
-  @escaped_search = URI.escape(@search)
-  @exact_movies = @neo.get_node_index("exact", "title", @escaped_search)
-  @exact_actors = @neo.get_node_index("exact", "name", @escaped_search)
-  @search_movies = @neo.get_node_index("search", "title", @escaped_search)
-  @search_actors = @neo.get_node_index("search", "name", @escaped_search)
+def expand_word_node(word_nodes, type, name_param)
+  return nil if !word_nodes
+  word_nodes.collect { |word_node|
+    @neo.traverse(word_node,
+                        "nodes",
+                        {"order" => "breadth first",
+                         "uniqueness" => "node global",
+                         "relationships" => [{"type"=> type, "direction" => "out"}],
+                         "return filter" => {"language" => "builtin", "name" => "all but start node"},
+                         "depth"         => 1}).collect{ | node | { "self" => node["self"], "data" => node["data"] } }
+  }.flatten.sort{ | node1, node2 | node1["data"][name_param] <=> node2["data"][name_param]}
+end
 
+post '/search' do
+  @search =  params["search"].downcase
+  @escaped_search = URI.escape(@search)
+  #@exact_movies = @neo.get_node_index("exact", "title", @escaped_search)
+  #@exact_actors = @neo.get_node_index("exact", "name", @escaped_search)
+  @search_movies = @neo.get_node_index("search", "title.part", @escaped_search)
+  @search_actors = @neo.get_node_index("search", "name.part", @escaped_search)
+
+  @search_actors=expand_word_node(@search_actors,"PART_OF_NAME", "name")
+  @search_movies=expand_word_node(@search_movies,"PART_OF_TITLE", "title")
+
+#  $stderr.puts @search_actors.inspect
+#  $stderr.puts @search_movies.inspect
   haml :search_results
 end
 
