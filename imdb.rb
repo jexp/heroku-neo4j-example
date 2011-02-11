@@ -56,7 +56,7 @@ before do
     :username => ENV['NEO4J_LOGIN'] , 
     :password => ENV['NEO4J_PASSWORD']
     })
-  @bacon = @neo.get_node_index("exact", "name", URI.escape("Bacon, Kevin")).first
+#  @bacon = @neo.get_node_index("exact", "name", URI.escape("Bacon, Kevin")).first
 end
 
 
@@ -97,6 +97,9 @@ post '/search' do
   haml :search_results
 end
 
+def node_id(node)
+  node["self"].split("/").last
+end
 def neighbours(type, direction)
   {"order" => "depth first",
                  "uniqueness" => "node global",
@@ -110,7 +113,7 @@ get '/movie/:id' do
 
   @roles = @neo.traverse(@movie, "fullpath", neighbours("ACTS_IN","in")).collect{ | path |
       { "actor_name" => path["end"]["data"]["name"],
-        "actor_link" => "/actor/" + path["end"]["self"].split("/").last,
+        "actor_link" => "/actor/" + node_id(path["end"]),
         "data" => path["relationships"].last["data"] }
       }.flatten.sort{ | node1, node2 | (node1["data"]["role"]||"") <=> (node2["data"]["role"]||"")}
 
@@ -125,7 +128,7 @@ get '/actor/:id' do
 
   @roles = @neo.traverse(@actor, "fullpath", neighbours("ACTS_IN","out")).collect{ | path |
       { "movie_title" => path["end"]["data"]["title"],
-        "movie_link" => "/movie/" + path["end"]["self"].split("/").last,
+        "movie_link" => "/movie/" + node_id(path["end"]),
         "data" => path["relationships"].last["data"] }
       }.flatten.sort{ | node1, node2 | (node1["data"]["role"]||"") <=> (node2["data"]["role"]||"")}
 
