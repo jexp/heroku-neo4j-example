@@ -31,3 +31,13 @@
         - @search_movies.each do |movie|
           %tr
             %td= link_to "/movie/" + movie["self"].split('/').last, movie["data"]["title"]
+
+%hr
+  %table
+    %tr
+      %th Action
+      %th Time (ms)
+    - @times.each do | result|
+      %tr
+        %td= result[0]
+        %td= result[1]

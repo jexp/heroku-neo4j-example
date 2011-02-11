@@ -35,3 +35,13 @@ Kevin Bacon number:
       %td= link_to role["actor_link"], role["actor_name"]
       %td= role["data"]["role"]
 
+
+%hr
+  %table
+    %tr
+      %th Action
+      %th Time (ms)
+    - @times.each do | result|
+      %tr
+        %td= result[0]
+        %td= result[1]

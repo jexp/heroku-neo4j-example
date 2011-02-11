@@ -57,6 +57,8 @@ before do
     :password => ENV['NEO4J_PASSWORD']
     })
 #  @bacon = @neo.get_node_index("exact", "name", URI.escape("Bacon, Kevin")).first
+  @time = Time.now.to_f
+  @times = []
 end
 
 
@@ -81,16 +83,25 @@ def expand_word_node(word_nodes, type, name_param)
   }.flatten.sort{ | node1, node2 | node1["data"][name_param] <=> node2["data"][name_param]}
 end
 
+def trace(name)
+    time = Time.now.to_f
+    @times << [name , ((time - @time)*1000).to_i]
+    @time = time
+end
+
 post '/search' do
   @search =  params["search"].downcase
   @escaped_search = URI.escape(@search)
   #@exact_movies = @neo.get_node_index("exact", "title", @escaped_search)
   #@exact_actors = @neo.get_node_index("exact", "name", @escaped_search)
   @search_movies = @neo.get_node_index("search", "title.part", @escaped_search)
+  trace(:search_movies)
   @search_actors = @neo.get_node_index("search", "name.part", @escaped_search)
-
+  trace(:search_actors)
   @search_actors=expand_word_node(@search_actors,"PART_OF_NAME", "name")
+  trace(:expand_actors)
   @search_movies=expand_word_node(@search_movies,"PART_OF_TITLE", "title")
+  trace(:expand_movies)
 
 #  $stderr.puts @search_actors.inspect
 #  $stderr.puts @search_movies.inspect
@@ -110,31 +121,41 @@ end
 
 get '/movie/:id' do
   @movie = @neo.get_node(params[:id])
-
-  @roles = @neo.traverse(@movie, "fullpath", neighbours("ACTS_IN","in")).collect{ | path |
+  trace(:movie)
+  @roles = @neo.traverse(@movie, "fullpath", neighbours("ACTS_IN","in"));
+  trace("fetch_roles "+(@roles.to_s.length/1024).to_s)
+  @roles = @roles.collect{ | path |
       { "actor_name" => path["end"]["data"]["name"],
         "actor_link" => "/actor/" + node_id(path["end"]),
         "data" => path["relationships"].last["data"] }
       }.flatten.sort{ | node1, node2 | (node1["data"]["role"]||"") <=> (node2["data"]["role"]||"")}
-
+  trace("parse_roles "+(@roles.to_s.length/1024).to_s)
   @bacon_path = @neo.get_path(@movie, 2122, {"type"=> "ACTS_IN"}, depth=6, algorithm="shortestPath")
+  trace(:bacon_path)
   @bacon_nodes = @bacon_path["nodes"].collect{ |n| @neo.get_node(n)}
-  
+  trace(:bacon_nodes)
   haml :show_movie
 end
 
 get '/actor/:id' do
   @actor = @neo.get_node(params[:id])
+  trace(:actor)
 
-  @roles = @neo.traverse(@actor, "fullpath", neighbours("ACTS_IN","out")).collect{ | path |
+  @roles = @neo.traverse(@actor, "fullpath", neighbours("ACTS_IN","out"))
+  trace("fetch_roles "+(@roles.to_s.length/1024).to_s)
+
+  @roles = @roles.collect{ | path |
       { "movie_title" => path["end"]["data"]["title"],
         "movie_link" => "/movie/" + node_id(path["end"]),
         "data" => path["relationships"].last["data"] }
       }.flatten.sort{ | node1, node2 | (node1["data"]["role"]||"") <=> (node2["data"]["role"]||"")}
+  trace("parse_roles "+(@roles.to_s.length/1024).to_s)
 
 
   @bacon_path = @neo.get_path(@actor, 2122, {"type"=> "ACTS_IN"}, depth=6, algorithm="shortestPath")
+  trace(:bacon_path)
   @bacon_nodes = @bacon_path["nodes"].collect{ |n| @neo.get_node(n)}
+  trace(:bacon_nodes)
 
   haml :show_actor
 end
