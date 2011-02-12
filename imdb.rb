@@ -108,8 +108,8 @@ post '/search' do
   @search_movies=expand_word_node(@search_movies,"PART_OF_TITLE", "title")
   trace(:expand_movies,@search_movies)
 
-#  $stderr.puts @search_actors.inspect
-#  $stderr.puts @search_movies.inspect
+  @times << [ :page, ((Time.now.to_f - @pagetime)*1000).to_i ]
+
   haml :search_results
 end
 
@@ -131,6 +131,7 @@ def bacon_path(start)
   trace(:bacon_nodes,@bacon_nodes)
   @times << [ :page, ((Time.now.to_f - @pagetime)*1000).to_i ]
 end
+
 get '/movie/:id' do
   @movie = @neo.get_node(params[:id])
   trace(:movie)
