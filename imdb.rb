@@ -60,6 +60,7 @@ before do
 #    })
 #  @bacon = @neo.get_node_index("exact", "name", URI.escape("Bacon, Kevin")).first
   @time = Time.now.to_f
+  @pagetime = Time.now.to_f
   @times = []
 end
 
@@ -126,10 +127,10 @@ end
 get '/movie/:id' do
   @movie = @neo.get_node(params[:id])
   trace(:movie)
-  @roles = @neo.traverse(@movie, "node", neighbours("ACTS_IN","in"))
-  trace(:fetch_roles_nodes,@roles)
-  @roles = @neo.traverse(@movie, "path", neighbours("ACTS_IN","in"))
-  trace(:fetch_roles_path,@roles)
+#  @roles = @neo.traverse(@movie, "node", neighbours("ACTS_IN","in"))
+#  trace(:fetch_roles_nodes,@roles)
+#  @roles = @neo.traverse(@movie, "path", neighbours("ACTS_IN","in"))
+#  trace(:fetch_roles_path,@roles)
   @roles = @neo.traverse(@movie, "fullpath", neighbours("ACTS_IN","in"))
   trace(:fetch_roles_fullpath,@roles)
   @roles = @roles.collect{ | path |
@@ -142,6 +143,7 @@ get '/movie/:id' do
   trace(:bacon_path,@bacon_path)
   @bacon_nodes = @bacon_path["nodes"].collect{ |n| @neo.get_node(n)}
   trace(:bacon_nodes,@bacon_nodes)
+  @times << [ :page, ((Time.now.to_f - @pagetime)*1000).to_i ]
   haml :show_movie
 end
 
@@ -162,6 +164,7 @@ get '/movie2/:id' do
   trace(:bacon_path)
   @bacon_nodes = @bacon_path["nodes"].collect{ |n| @neo.get_node(n)}
   trace(:bacon_nodes)
+  @times << [ :page, ((Time.now.to_f - @pagetime)*1000).to_i ]
   haml :show_movie
 end
 
