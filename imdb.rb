@@ -124,6 +124,13 @@ def neighbours(type, direction)
                  "depth"         => 1}
 end
 
+def bacon_path(start) 
+  @bacon_path = @neo.get_path(start, 2122, {"type"=> "ACTS_IN"}, depth=6, algorithm="shortestPath")
+  trace(:bacon_path,@bacon_path)
+  @bacon_nodes = @bacon_path["nodes"].collect{ |n| @neo.get_node(n)}
+  trace(:bacon_nodes,@bacon_nodes)
+  @times << [ :page, ((Time.now.to_f - @pagetime)*1000).to_i ]
+end
 get '/movie/:id' do
   @movie = @neo.get_node(params[:id])
   trace(:movie)
@@ -139,11 +146,7 @@ get '/movie/:id' do
         "data" => path["relationships"].last["data"] }
       }.flatten.sort{ | node1, node2 | (node1["data"]["role"]||"") <=> (node2["data"]["role"]||"")}
   trace(:parse_roles,@roles)
-  @bacon_path = @neo.get_path(@movie, 2122, {"type"=> "ACTS_IN"}, depth=6, algorithm="shortestPath")
-  trace(:bacon_path,@bacon_path)
-  @bacon_nodes = @bacon_path["nodes"].collect{ |n| @neo.get_node(n)}
-  trace(:bacon_nodes,@bacon_nodes)
-  @times << [ :page, ((Time.now.to_f - @pagetime)*1000).to_i ]
+  bacon_path(@movie)
   haml :show_movie
 end
 
@@ -159,12 +162,7 @@ get '/movie2/:id' do
     role["actor_link"] = "/actor/" + node["self"].split('/').last
   end
   trace(:fetch_movie_actors,@roles)
-
-  @bacon_path = @neo.get_path(@movie, 2122, {"type"=> "ACTS_IN"}, depth=6, algorithm="shortestPath")
-  trace(:bacon_path)
-  @bacon_nodes = @bacon_path["nodes"].collect{ |n| @neo.get_node(n)}
-  trace(:bacon_nodes)
-  @times << [ :page, ((Time.now.to_f - @pagetime)*1000).to_i ]
+  bacon_path(@movie)
   haml :show_movie
 end
 
@@ -181,12 +179,25 @@ get '/actor/:id' do
         "data" => path["relationships"].last["data"] }
       }.flatten.sort{ | node1, node2 | (node1["data"]["role"]||"") <=> (node2["data"]["role"]||"")}
   trace(:parse_roles,@roles)
+  bacon_path(@actor)
 
+  haml :show_actor
+end
 
-  @bacon_path = @neo.get_path(@actor, 2122, {"type"=> "ACTS_IN"}, depth=6, algorithm="shortestPath")
-  trace(:bacon_path,@bacon_path)
-  @bacon_nodes = @bacon_path["nodes"].collect{ |n| @neo.get_node(n)}
-  trace(:bacon_nodes,@bacon_nodes)
+get '/actor2/:id' do
+  @actor = @neo.get_node(params[:id])
+  trace(:actor)
+
+  @roles = @neo.get_node_relationships(@actor, "out", "ACTS_IN")
+  trace(:fetch_actor_relationships, @roles)
+  @roles.each do |role| 
+    node = @neo.get_node(role["end"])
+    role["movie_title"] = node["data"]["title"]
+    role["movie_link"] = "/movie/" + node["self"].split('/').last
+  end
+  trace(:fetch_actor_movies,@roles)
+
+  bacon_path(@actor)
 
   haml :show_actor
 end
