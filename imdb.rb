@@ -127,7 +127,7 @@ end
 def bacon_path(start) 
   @bacon_path = @neo.get_path(start, 2122, {"type"=> "ACTS_IN"}, depth=6, algorithm="shortestPath")
   trace(:bacon_path,@bacon_path)
-  @bacon_nodes = @bacon_path["nodes"].collect{ |n| @neo.get_node(n)}
+  @bacon_nodes = (@bacon_path["nodes"]||[]).collect{ |n| @neo.get_node(n)}
   trace(:bacon_nodes,@bacon_nodes)
   @times << [ :page, ((Time.now.to_f - @pagetime)*1000).to_i ]
 end
