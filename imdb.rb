@@ -34,28 +34,30 @@ include Neography
 
 
 configure do
-    env = ENV['NEO4J_ENV'] || "development"
-
+    env = ENV['NEO4J_ENV'] && "development"
+    $stderr.puts env
     if env == "development"
       require 'net-http-spy'
       Net::HTTP.http_logger_options = {:verbose => true} 
     end
 
-  Config.server = ENV['NEO4J_HOST']
+  Config.server = ENV['NEO4J_HOST'] ||'ec2-184-73-42-24.compute-1.amazonaws.com'
+  Config.directory = '/' + (ENV['NEO4J_INSTANCE'] ||'imdb')
   Config.authentication = 'basic'
-  Config.username = ENV['NEO4J_LOGIN']
-  Config.password = ENV['NEO4J_PASSWORD']
+  Config.username = ENV['NEO4J_LOGIN'] ||'imdb'
+  Config.password = ENV['NEO4J_PASSWORD']||'dbmi'
 
 end
 
 before do
-  @neo = Neography::Rest.new({
-    :server => ENV['NEO4J_HOST'],
+  @neo = Neography::Rest.new()
+#  @neo = Neography::Rest.new({
+#    :server => ENV['NEO4J_HOST'],
 #    :directory => "/#{ENV['NEO4J_INSTANCE']}",
-    :authentication => 'basic',
-    :username => ENV['NEO4J_LOGIN'] , 
-    :password => ENV['NEO4J_PASSWORD']
-    })
+#    :authentication => 'basic',
+#    :username => ENV['NEO4J_LOGIN'] ,
+#    :password => ENV['NEO4J_PASSWORD']
+#    })
 #  @bacon = @neo.get_node_index("exact", "name", URI.escape("Bacon, Kevin")).first
   @time = Time.now.to_f
   @times = []
@@ -97,13 +99,13 @@ post '/search' do
   #@exact_movies = @neo.get_node_index("exact", "title", @escaped_search)
   #@exact_actors = @neo.get_node_index("exact", "name", @escaped_search)
   @search_movies = @neo.get_node_index("search", "title.part", @escaped_search)
-  trace(:search_movies)
+  trace(:search_movies,@search_movies)
   @search_actors = @neo.get_node_index("search", "name.part", @escaped_search)
-  trace(:search_actors)
+  trace(:search_actors,@search_actors)
   @search_actors=expand_word_node(@search_actors,"PART_OF_NAME", "name")
-  trace(:expand_actors)
+  trace(:expand_actors,@search_actors)
   @search_movies=expand_word_node(@search_movies,"PART_OF_TITLE", "title")
-  trace(:expand_movies)
+  trace(:expand_movies,@search_movies)
 
 #  $stderr.puts @search_actors.inspect
 #  $stderr.puts @search_movies.inspect
@@ -124,8 +126,12 @@ end
 get '/movie/:id' do
   @movie = @neo.get_node(params[:id])
   trace(:movie)
+  @roles = @neo.traverse(@movie, "node", neighbours("ACTS_IN","in"))
+  trace(:fetch_roles_nodes,@roles)
+  @roles = @neo.traverse(@movie, "path", neighbours("ACTS_IN","in"))
+  trace(:fetch_roles_path,@roles)
   @roles = @neo.traverse(@movie, "fullpath", neighbours("ACTS_IN","in"))
-  trace(:fetch_roles,@roles)
+  trace(:fetch_roles_fullpath,@roles)
   @roles = @roles.collect{ | path |
       { "actor_name" => path["end"]["data"]["name"],
         "actor_link" => "/actor/" + node_id(path["end"]),
